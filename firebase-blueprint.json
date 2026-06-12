@@ -1,0 +1,168 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Representación de perfil básico del usuario",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Id único de usuario"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nombre de usuario"
+        },
+        "email": {
+          "type": "string",
+          "description": "Dirección de correo electrónico"
+        },
+        "avatarId": {
+          "type": "integer",
+          "description": "Identificador de avatar del usuario"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de actualización remota de perfil"
+        }
+      },
+      "required": ["uid", "name", "email", "avatarId", "updatedAt"]
+    },
+    "Playlist": {
+      "title": "Playlist",
+      "description": "Lista de reproducción personalizada del usuario",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Id único de playlist"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nombre de la lista"
+        },
+        "videoIds": {
+          "type": "array",
+          "description": "Lista de IDs de videos de YouTube en la lista"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de creación de playlist"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de última modificación de playlist"
+        }
+      },
+      "required": ["id", "name", "videoIds", "createdAt", "updatedAt"]
+    },
+    "HistoryItem": {
+      "title": "HistoryItem",
+      "description": "Log de canción reproducida por el usuario",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID de video de YouTube"
+        },
+        "title": {
+          "type": "string",
+          "description": "Título de la pista"
+        },
+        "artist": {
+          "type": "string",
+          "description": "Artista de la pista"
+        },
+        "duration": {
+          "type": "string",
+          "description": "Duración de la pista"
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoría musical"
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "description": "URL de la miniatura de YouTube de la pista"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha y hora cuando se reprodujo"
+        }
+      },
+      "required": ["id", "title", "artist", "duration", "category", "thumbnailUrl", "timestamp"]
+    },
+    "FavoriteItem": {
+      "title": "FavoriteItem",
+      "description": "Pista marcada como favorita por el usuario",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID del video marcado de favorita"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de adición"
+        }
+      },
+      "required": ["id", "createdAt"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "Configuraciones avanzadas de ecualización y normalización del reproductor",
+      "type": "object",
+      "properties": {
+        "carMode": {
+          "type": "boolean",
+          "description": "Indica si el modo Android Auto de conducción está activado"
+        },
+        "isNormalizing": {
+          "type": "boolean",
+          "description": "Establece si el normalizador acústico está activo"
+        },
+        "normalizationLevel": {
+          "type": "string",
+          "description": "Nivel seleccionable de normalización (bajo, medio, alto)"
+        },
+        "eqPreset": {
+          "type": "string",
+          "description": "Preset de ecualización activo (ruta, enfoque, vibrante, plana)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de actualización de ajustes"
+        }
+      },
+      "required": ["carMode", "isNormalizing", "normalizationLevel", "eqPreset", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Colección raíz donde se indexan perfiles de usuarios registrados"
+    },
+    "users/{userId}/playlists/{playlistId}": {
+      "schema": "Playlist",
+      "description": "Subcolección de listas de reproducción personalizadas asociadas al usuario"
+    },
+    "users/{userId}/history/{trackId}": {
+      "schema": "HistoryItem",
+      "description": "Subcolección de registro histórico de streaming del usuario"
+    },
+    "users/{userId}/favorites/{trackId}": {
+      "schema": "FavoriteItem",
+      "description": "Subcolección de catálogo de canciones marcadas como favorita por el usuario"
+    },
+    "users/{userId}/settings/{settingsId}": {
+      "schema": "UserSettings",
+      "description": "Subcolección que define estado y configuraciones del dispositivo del usuario"
+    }
+  }
+}

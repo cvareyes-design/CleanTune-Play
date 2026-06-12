@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global Safety Net Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // 2. Global Safety Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+    
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+    
+    // 3. Schema/Type Hardening Helpers
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'avatarId', 'updatedAt']) 
+        && data.keys().size() == 5
+        && data.uid is string && data.uid.size() <= 128
+        && data.name is string && data.name.size() <= 100
+        && data.email is string && data.email.size() <= 150
+        && data.avatarId is int
+        && data.updatedAt == request.time;
+    }
+    
+    function isValidPlaylist(data) {
+      return data.keys().hasAll(['id', 'name', 'videoIds', 'createdAt', 'updatedAt'])
+        && data.keys().size() == 5
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 100
+        && data.videoIds is list
+        && data.videoIds.size() <= 300
+        && (data.createdAt == request.time || data.createdAt is timestamp)
+        && data.updatedAt == request.time;
+    }
+    
+    function isValidHistoryItem(data) {
+      return data.keys().hasAll(['id', 'title', 'artist', 'duration', 'category', 'thumbnailUrl', 'timestamp'])
+        && data.keys().size() == 7
+        && data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 300
+        && data.artist is string && data.artist.size() <= 300
+        && data.duration is string && data.duration.size() <= 50
+        && data.category is string && data.category.size() <= 100
+        && data.thumbnailUrl is string && data.thumbnailUrl.size() <= 600
+        && (data.timestamp == request.time || data.timestamp is timestamp);
+    }
+    
+    function isValidFavoriteItem(data) {
+      return data.keys().hasAll(['id', 'createdAt'])
+        && data.keys().size() == 2
+        && data.id is string && data.id.size() <= 128
+        && (data.createdAt == request.time || data.createdAt is timestamp);
+    }
+    
+    function isValidUserSettings(data) {
+      return data.keys().hasAll(['carMode', 'isNormalizing', 'normalizationLevel', 'eqPreset', 'updatedAt'])
+        && data.keys().size() == 5
+        && data.carMode is bool
+        && data.isNormalizing is bool
+        && data.normalizationLevel is string && data.normalizationLevel.size() <= 50
+        && data.eqPreset is string && data.eqPreset.size() <= 50
+        && data.updatedAt == request.time;
+    }
+
+    // 4. Matches and Rules Configurations
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isEmailVerified() && isValidUserProfile(incoming()) && incoming().uid == userId;
+      allow update: if isOwner(userId) && isEmailVerified() && isValidUserProfile(incoming()) 
+                     && incoming().uid == existing().uid
+                     && incoming().email == existing().email;
+      allow delete: if false;
+
+      match /playlists/{playlistId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isEmailVerified() && isValidId(playlistId) && isValidPlaylist(incoming()) && incoming().id == playlistId;
+        allow update: if isOwner(userId) && isEmailVerified() && isValidId(playlistId) && isValidPlaylist(incoming())
+                       && incoming().id == existing().id
+                       && incoming().createdAt == existing().createdAt;
+        allow delete: if isOwner(userId) && isEmailVerified() && isValidId(playlistId);
+      }
+
+      match /history/{trackId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isEmailVerified() && isValidId(trackId) && isValidHistoryItem(incoming()) && incoming().id == trackId;
+        allow update: if false; // History is append-only
+        allow delete: if isOwner(userId) && isEmailVerified() && isValidId(trackId);
+      }
+
+      match /favorites/{trackId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isEmailVerified() && isValidId(trackId) && isValidFavoriteItem(incoming()) && incoming().id == trackId;
+        allow update: if false;
+        allow delete: if isOwner(userId) && isEmailVerified() && isValidId(trackId);
+      }
+
+      match /settings/{settingsId} {
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) && isEmailVerified() && isValidId(settingsId) && isValidUserSettings(incoming());
+        allow update: if isOwner(userId) && isEmailVerified() && isValidId(settingsId) && isValidUserSettings(incoming());
+        allow delete: if false;
+      }
+    }
+  }
+}

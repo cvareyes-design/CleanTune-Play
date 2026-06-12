@@ -1,0 +1,6 @@
+{
+  "name": "CleanTune Music Player",
+  "description": "Un reproductor web de YouTube Music optimizado para móviles y diseñado para conducción con modo Android Auto y bloqueo de anuncios mediante Brave Browser.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

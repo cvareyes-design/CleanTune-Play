@@ -1,0 +1,39 @@
+{
+  "short_name": "CleanTune",
+  "name": "CleanTune Play",
+  "description": "Reproductor de YouTube Music y Consola de Auto libre de anuncios optimizado para móviles y conducción.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#e11d48",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/color/192/000000/youtube-play.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "https://img.icons8.com/color/512/000000/youtube-play.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "https://img.icons8.com/color/192/000000/youtube-play.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://img.icons8.com/color/512/000000/youtube-play.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -393,7 +393,19 @@ export default function App() {
     updateSettingsOnServer({ carMode: nextMode });
   };
 
-  // Fetch search results from our server-side intelligent YouTube catalog grounder
+  const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+  const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
+
+  const mapYoutubeItemToTrack = (item: any): Track => ({
+    id: item.id.videoId,
+    title: item.snippet.title,
+    artist: item.snippet.channelTitle || "YouTube Music",
+    duration: "Desconocida",
+    category: "Custom",
+    thumbnailUrl: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.default?.url || ""
+  });
+
+  // Fetch search results directly from YouTube Data API
   const handleOnlineSearch = async (e: FormEvent) => {
     e.preventDefault();
     if (!onlineSearchQuery.trim()) return;
@@ -401,21 +413,41 @@ export default function App() {
     setIsSearchingOnline(true);
     setOnlineSearchError("");
 
+    if (!YOUTUBE_API_KEY) {
+      setOnlineSearchError("No se ha configurado la API de YouTube. Añade VITE_YOUTUBE_API_KEY en .env.");
+      setOnlineResults([]);
+      setIsSearchingOnline(false);
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(onlineSearchQuery)}`);
+      const query = `${onlineSearchQuery.trim()} music`;
+      const url = `${YOUTUBE_SEARCH_URL}?part=snippet&type=video&videoCategoryId=10&maxResults=10&q=${encodeURIComponent(query)}&key=${encodeURIComponent(YOUTUBE_API_KEY)}`;
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error("La búsqueda falló en responder de forma correcta.");
+        throw new Error(`YouTube API error ${response.status}`);
       }
+
       const data = await response.json();
-      if (data.result) {
-        setOnlineResults(data.result);
+      if (!Array.isArray(data.items) || data.items.length === 0) {
+        setOnlineSearchError("No se encontraron resultados en YouTube Music.");
+        setOnlineResults([]);
       } else {
-        setOnlineSearchError("No se encontraron resultados en el catálogo.");
+        const results: Track[] = data.items
+          .filter((item: any) => item.id?.videoId && item.snippet)
+          .map(mapYoutubeItemToTrack)
+          .filter((track) => track.id && track.thumbnailUrl);
+
+        if (results.length === 0) {
+          setOnlineSearchError("No se encontraron resultados en YouTube Music.");
+          setOnlineResults([]);
+        } else {
+          setOnlineResults(results);
+        }
       }
     } catch (err: any) {
       console.error(err);
-      setOnlineSearchError("Error de conexión. Se cargó una lista alternativa temporal.");
-      // Graceful fallback lists
+      setOnlineSearchError(err instanceof Error ? err.message : "Error al conectar con YouTube.");
       const queryClean = onlineSearchQuery.trim();
       setOnlineResults([
         {

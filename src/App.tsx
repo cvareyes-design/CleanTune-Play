@@ -64,6 +64,7 @@ interface Track {
   duration: string;
   category: "Lofi / Relax" | "Energía / Gym" | "Pop / Electro" | "Retro / Clásico" | "Urbano / Latino" | "Custom";
   thumbnailUrl: string;
+  thumbnail?: string;
 }
 
 interface CustomPlaylist {
@@ -196,6 +197,38 @@ export default function App() {
   // New Google Account connection states
   const [googleAccount, setGoogleAccount] = useState<{ name: string; email: string; avatarId: number; uid?: string } | null>(null);
   const [loginModalOpen, setLoginModalOpen] = useState<boolean>(false);
+
+  // Ensure DOM-based scripts run after React mounts (loads ./main.js)
+  useEffect(() => {
+    import('./main.js')
+      .then(() => {
+        // loaded
+      })
+      .catch((err) => console.error('Error loading main.js', err));
+  }, []);
+
+  // Listen for `loadVideo` events emitted by DOM scripts and play via React handler
+  useEffect(() => {
+    const onLoadVideo = (e: any) => {
+      const id = e?.detail?.id;
+      if (!id) return;
+
+      const found = CURATED_TRACKS.find(t => t.id === id);
+      const trackToPlay = found || {
+        id,
+        title: `Pista ${id}`,
+        artist: 'YouTube',
+        duration: 'Desconocida',
+        category: 'Custom',
+        thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+      };
+
+      handlePlayTrack(trackToPlay as Track);
+    };
+
+    document.addEventListener('loadVideo', onLoadVideo as EventListener);
+    return () => document.removeEventListener('loadVideo', onLoadVideo as EventListener);
+  }, [history, favorites, playlists]);
 
   // Authenticated state listener
   useEffect(() => {
@@ -1135,6 +1168,38 @@ export default function App() {
                         <span>{isSearchingOnline ? 'Buscando...' : 'Buscar Online'}</span>
                       </button>
                     </form>
+
+                    {/* Local catalog quick search (DOM-friendly elements) */}
+                    <div className="mt-4">
+                      <div className="search-wrapper mx-auto relative">
+                        <input
+                          id="search-input"
+                          type="text"
+                          placeholder="Buscar en catálogo local..."
+                          className="w-full bg-neutral-950 border border-neutral-800 rounded-full px-4 py-3 text-sm focus:outline-none text-neutral-100 placeholder-neutral-500"
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          value={searchQuery}
+                        />
+                        <button id="clear-search" aria-label="Limpiar búsqueda" onClick={() => { setSearchQuery(''); }}>
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {categoriesList.map((cat) => (
+                          <button
+                            key={cat}
+                            className={`category-btn ${selectedCategory === cat ? 'active' : ''}`}
+                            data-category={cat}
+                            onClick={() => { setSelectedCategory(cat); }}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div id="search-results" className="mt-4" />
+                    </div>
 
                     {onlineSearchError && (
                       <p className="text-xs text-rose-400 font-semibold">{onlineSearchError}</p>

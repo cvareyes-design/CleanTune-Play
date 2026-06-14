@@ -1538,7 +1538,7 @@ export default function App() {
                       id="youtube-player-frame"
                       title={currentTrack.title}
                       // YouTube-nocookie prevents major tracking algorithms and is easier for Brave to block ads on.
-                      src={`https://www.youtube-nocookie.com/embed/${currentTrack.id}?autoplay=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=1`}
+                      src={`https://www.youtube-nocookie.com/embed/${currentTrack.id}?autoplay=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
@@ -2133,7 +2133,7 @@ export default function App() {
                   key={currentTrack.id}
                   id="youtube-car-player-frame"
                   title="Car player hidden video stream"
-                  src={`https://www.youtube-nocookie.com/embed/${currentTrack.id}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1`}
+                  src={`https://www.youtube-nocookie.com/embed/${currentTrack.id}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 ></iframe>

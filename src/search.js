@@ -137,8 +137,53 @@ export function searchImmediately(query, category = 'all') {
 /**
  * Obtiene sugerencias populares (para mostrar al inicio)
  */
-export function getPopularSuggestions() {
-  return CATALOG.filter(track => track.isLive).slice(0, 10);
+export async function getPopularSuggestions() {
+  // Cache key with date to refresh daily
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const cachedDate = localStorage.getItem('yt_top10_date');
+    const cachedData = localStorage.getItem('yt_top10_list');
+
+    if (cachedDate === today && cachedData) {
+      try {
+        return JSON.parse(cachedData);
+      } catch (e) {
+        // fallthrough to fetch
+      }
+    }
+
+    const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+    if (!API_KEY) throw new Error('No API key');
+
+    const region = (navigator.language || 'US').split('-')[1] || 'US';
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&videoCategoryId=10&maxResults=10&regionCode=${encodeURIComponent(region)}&key=${encodeURIComponent(API_KEY)}`;
+
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`YouTube error ${resp.status}`);
+
+    const data = await resp.json();
+    if (!Array.isArray(data.items) || data.items.length === 0) throw new Error('No items');
+
+    const list = data.items.map(item => ({
+      id: item.id,
+      title: item.snippet?.title || 'Unknown',
+      artist: item.snippet?.channelTitle || 'YouTube Music',
+      category: 'Top 10',
+      isLive: item.snippet?.liveBroadcastContent === 'live',
+      thumbnail: item.snippet?.thumbnails?.mqdefault?.url || item.snippet?.thumbnails?.default?.url || `https://img.youtube.com/vi/${item.id}/mqdefault.jpg`,
+      duration: ''
+    }));
+
+    try {
+      localStorage.setItem('yt_top10_date', today);
+      localStorage.setItem('yt_top10_list', JSON.stringify(list));
+    } catch (e) {}
+
+    return list;
+  } catch (e) {
+    // Fallback to existing local catalog (live items)
+    return CATALOG.filter(track => track.isLive).slice(0, 10);
+  }
 }
 
 /**

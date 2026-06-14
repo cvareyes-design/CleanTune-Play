@@ -9,9 +9,14 @@ const clearSearchBtn = document.getElementById('clear-search');
 
 let currentCategory = 'all';
 
-// 1. Inicializar con sugerencias populares
-function init() {
-  const popular = getPopularSuggestions();
+// 1. Inicializar con sugerencias populares (ahora asíncrono: top10 diario)
+async function init() {
+  let popular = [];
+  try {
+    popular = await getPopularSuggestions();
+  } catch (e) {
+    popular = getPopularSuggestions();
+  }
   renderTracks(popular, searchResults, { emptyMessage: 'No hay sugerencias disponibles' });
 }
 
